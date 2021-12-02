@@ -1,6 +1,3 @@
-from os import P_PGID
-
-
 def part1(moves):
     h_pos = 0
     depth = 0
