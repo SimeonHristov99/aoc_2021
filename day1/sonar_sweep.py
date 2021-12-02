@@ -30,7 +30,6 @@ def main():
         distances = f.read()
 
     # Parse the input string into a list of numbers.
-    # [:-1] for ignoring the final newline
     distances = list(map(int, distances.split('\n')))
 
     # print(part1(distances))
