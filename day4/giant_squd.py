@@ -22,18 +22,29 @@ def parse(filename):
     return draws, np.array(boards)
 
 
-def part1(draws, boards):
+def get_scores(draws, boards):
+    scores = []
+
     for draw in draws:
-        for board in boards:
-            board[board == draw] = -1
-            if np.sum(np.equal(board, -1).all(axis=1)) or np.sum(np.equal(board, -1).all(axis=0)):
-                return np.sum(board[board != -1]) * draw
+        i = 0
+        while i < len(boards):
+            boards[i][boards[i] == draw] = -1
+            if np.sum(np.equal(boards[i], -1).all(axis=1)) or np.sum(np.equal(boards[i], -1).all(axis=0)):
+                scores.append(np.sum(boards[i][boards[i] != -1]) * draw)
+                boards = np.delete(boards, i, axis=0)
+                i -= 1
+            i += 1
+    
+    return scores
 
 
 def main():
     draws, boards = parse('input.txt')
 
-    print(f'Part 1: {part1(draws, boards)}')
+    scores = get_scores(draws, boards)
+
+    print(f'Part 1: {scores[0]}')
+    print(f'Part 2: {scores[-1]}')
 
 
 if __name__ == '__main__':
