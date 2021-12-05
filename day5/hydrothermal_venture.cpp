@@ -73,10 +73,10 @@ void parse(const std::string &buffer, int board[][BOARD_SIZE], bool include_diag
         int col_start = (y1 == min_y ? x1 : x2);
         int col_end = (y1 == min_y ? x2 : x1);
 
-        for(int i = min_y; i <= max_y; ++i)
+        for (int i = min_y; i <= max_y; ++i)
         {
             ++board[i][col_start];
-            
+
             col_start += (col_start < col_end ? 1 : -1);
         }
 
