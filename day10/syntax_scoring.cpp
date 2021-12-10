@@ -1,16 +1,16 @@
 #include <iostream>
 #include <fstream>
 #include <stack>
+#include <algorithm>
+#include <vector>
 
 #if 0
 const char *filename = "sample.txt";
-const int INPUT_SZ = 25;
 #else
 const char *filename = "input.txt";
-const int INPUT_SZ = 110;
 #endif
 
-int validate(const std::string &input, bool get_score=true)
+long validate(const std::string &input, bool score_incorrect = true)
 {
     std::stack<char> s;
 
@@ -26,33 +26,33 @@ int validate(const std::string &input, bool get_score=true)
             {
             case ')':
             {
-                if (get_score && s.top() != '(')
+                if (s.top() != '(')
                 {
-                    return 3;
+                    return (score_incorrect ? 3 : 0);
                 }
                 break;
             }
             case ']':
             {
-                if (get_score && s.top() != '[')
+                if (s.top() != '[')
                 {
-                    return 57;
+                    return (score_incorrect ? 57 : 0);
                 }
                 break;
             }
             case '}':
             {
-                if (get_score && s.top() != '{')
+                if (s.top() != '{')
                 {
-                    return 1197;
+                    return (score_incorrect ? 1197 : 0);
                 }
                 break;
             }
             case '>':
             {
-                if (get_score && s.top() != '<')
+                if (s.top() != '<')
                 {
-                    return 25137;
+                    return (score_incorrect ? 25137 : 0);
                 }
                 break;
             }
@@ -67,10 +67,41 @@ int validate(const std::string &input, bool get_score=true)
         }
     }
 
-    // if(s.size() > 0)
-    // {
-    //     printf("Size: %ld", s.size());
-    // }
+    if (!score_incorrect && s.size() > 0)
+    {
+        long score = 0;
+
+        while (!s.empty())
+        {
+            switch (s.top())
+            {
+            case '(':
+            {
+                score = score * 5 + 1;
+                break;
+            }
+            case '[':
+            {
+                score = score * 5 + 2;
+                break;
+            }
+            case '{':
+            {
+                score = score * 5 + 3;
+                break;
+            }
+            case '<':
+            {
+                score = score * 5 + 4;
+                break;
+            }
+            }
+
+            s.pop();
+        }
+
+        return score;
+    }
 
     return 0;
 }
@@ -97,7 +128,7 @@ int part1()
     return score;
 }
 
-int part2()
+long part2()
 {
     std::ifstream fin(filename);
     if (!fin)
@@ -106,24 +137,29 @@ int part2()
         return -1;
     }
 
-    int score = 0;
+    std::vector<long> scores;
     std::string buffer;
 
     while (std::getline(fin, buffer))
     {
-        score += validate(buffer, false);
-        return -1;
+        long score = validate(buffer, false);
+        if (score > 0)
+        {
+            scores.push_back(score);
+        }
     }
 
     fin.close();
 
-    return score;
+    std::sort(scores.begin(), scores.end());
+
+    return scores[scores.size() / 2];
 }
 
 int main(int argc, char const *argv[])
 {
     printf("Part 1: %d\n", part1());
-    // printf("Part 2: %d\n", part2());
+    printf("Part 2: %ld\n", part2());
 
     return 0;
 }
