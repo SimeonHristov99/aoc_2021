@@ -94,7 +94,12 @@ int flash(int grid[][GRID_SIZE])
         {
             for (int j = top.second - 1; j < top.second + 2; ++j)
             {
-                if (i == top.first && j == top.second || i < 0 || j < 0 || i >= GRID_SIZE || j >= GRID_SIZE || visited.find({i, j}) != visited.end())
+                if (
+                    i == top.first && j == top.second
+                    || i < 0 || j < 0
+                    || i >= GRID_SIZE || j >= GRID_SIZE
+                    || visited.find({i, j}) != visited.end()
+                )
                     continue;
 
                 ++grid[i][j];
@@ -109,9 +114,12 @@ int flash(int grid[][GRID_SIZE])
     return result;
 }
 
-int part1(int grid[][GRID_SIZE])
+void part1()
 {
     int result = 0;
+    int grid[GRID_SIZE][GRID_SIZE];
+
+    parse_grid(grid);
 
     for (int i = 0; i < STEPS; ++i)
     {
@@ -120,17 +128,28 @@ int part1(int grid[][GRID_SIZE])
         result += flash(grid);
     }
 
-    return result;
+    printf("Part 1: %d\n", result);
 }
 
-int main(int argc, char const *argv[])
+void part2()
 {
-    int result = 0;
     int grid[GRID_SIZE][GRID_SIZE];
 
     parse_grid(grid);
 
-    printf("Part 1: %d\n", part1(grid));
+    int i = 0;
+    for (; flash(grid) != GRID_SIZE * GRID_SIZE; ++i)
+    {
+        step(grid);
+    }
+
+    printf("Part 2: %d\n", i);
+}
+
+int main(int argc, char const *argv[])
+{
+    part1();
+    part2();
 
     return 0;
 }
