@@ -7,7 +7,7 @@ const char *filename = "sample.txt";
 const int FOLDS_CAP = 2;
 #else
 const char *filename = "input.txt";
-const int FOLDS_CAP = 11;
+const int FOLDS_CAP = 12;
 #endif
 
 const int GRID_CAP = 2048;
@@ -152,17 +152,69 @@ void part1()
     init_with(grid, '.');
 
     parse(grid, folds);
-    size_t rows = folds[1][1] * 2 + 1;
-    size_t cols = folds[0][1] * 2 + 1;
 
-    fold_x(grid, rows, cols, folds[0][1]);
+    size_t rows = 0, cols = 0;
+
+    if (folds[0][0] == 1)
+    {
+        rows = folds[1][1] * 2 + 1;
+        cols = folds[0][1] * 2 + 1;
+
+        fold_x(grid, rows, cols, folds[0][1]);
+    }
+    else
+    {
+        rows = folds[0][1] * 2 + 1;
+        cols = folds[1][1] * 2 + 1;
+
+        fold_y(grid, rows, cols, folds[0][1]);
+    }
 
     std::cout << "Part 1: " << count_hashes(grid, rows, cols) << '\n';
+}
+
+void part2()
+{
+    int folds[FOLDS_CAP][2];
+    char grid[GRID_CAP][GRID_CAP];
+
+    init_with(grid, '.');
+
+    parse(grid, folds);
+
+    size_t rows = 0, cols = 0;
+
+    if (folds[0][0] == 1)
+    {
+        rows = folds[1][1] * 2 + 1;
+        cols = folds[0][1] * 2 + 1;
+    }
+    else
+    {
+        rows = folds[0][1] * 2 + 1;
+        cols = folds[1][1] * 2 + 1;
+    }
+
+    for (int i = 0; i < FOLDS_CAP; ++i)
+    {
+        if (folds[i][0] == 1)
+        {
+            fold_x(grid, rows, cols, folds[i][1]);
+        }
+        else
+        {
+            fold_y(grid, rows, cols, folds[i][1]);
+        }
+    }
+
+    std::cout << "Part 2:\n";
+    dump_grid(grid, rows, cols);
 }
 
 int main(int argc, char const *argv[])
 {
     part1();
+    part2();
 
     return 0;
 }
