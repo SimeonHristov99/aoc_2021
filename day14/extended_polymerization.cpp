@@ -2,145 +2,93 @@
 #include <fstream>
 #include <vector>
 
-#if 0
-const char *filename = "sample.txt";
-const int INSERTIONS_CAP = 16;
-#else
-const char *filename = "input.txt";
-const int INSERTIONS_CAP = 100;
-#endif
+const char *FILENAME = "sample.txt";
+const int SIZE = 26;
+const int STEPS = 1;
 
-const int STEPS = 10;
-
-std::string split_by_delim(const std::string &s, const char delim, std::string &out)
+void parse(std::vector<std::string> &subs, int grid[][SIZE][2])
 {
-    std::string rest;
-
-    int len_s = s.length();
-    int i = 0;
-    while (i < len_s && s[i] != delim)
-    {
-        out += s[i++];
-    }
-
-    ++i;
-
-    while (i < len_s)
-    {
-        rest += s[i++];
-    }
-
-    return rest;
-}
-
-struct Insertion
-{
-    std::string pair;
-    char value;
-};
-
-void parse(std::string &polymer_template, Insertion insertions[INSERTIONS_CAP], size_t &size)
-{
-    std::ifstream fin(filename);
+    std::string buffer, sub;
+    std::ifstream fin(FILENAME);
     if (!fin)
     {
-        std::cout << "ERROR: Could not open " << filename << '\n';
+        std::cout << "ERROR: Could not open " << FILENAME << '\n';
+        fin.close();
         return;
     }
 
-    std::string buffer;
-
     std::getline(fin, buffer);
-    polymer_template = buffer;
+
+    int len_buf = buffer.length();
+    for (int i = 0; i < len_buf - 1; i++)
+    {
+        ++grid[buffer[i] - 'A'][buffer[i + 1] - 'A'][0];
+        grid[buffer[i] - 'A'][buffer[i + 1] - 'A'][1] = true;
+    }
+
     std::getline(fin, buffer);
 
     while (std::getline(fin, buffer))
     {
-        std::string leftover = split_by_delim(buffer, ' ', insertions[size].pair);
-        std::string tmp;
-        insertions[size++].value = split_by_delim(leftover, ' ', tmp)[0];
+        sub += buffer[0];
+        sub += buffer[1];
+        sub += buffer[6];
+
+        subs.push_back(sub);
+        sub = "";
     }
 
     fin.close();
 }
 
-void dump_insertions(Insertion insertions[INSERTIONS_CAP], size_t &size)
+void init_grid(int grid[][SIZE][2])
 {
-    for (int i = 0; i < size; ++i)
+    for (int i = 0; i < SIZE; ++i)
     {
-        std::cout << insertions[i].pair << " -> " << insertions[i].value << '\n';
+        for (int j = 0; j < SIZE; ++j)
+        {
+            grid[i][j][0] = 0;
+            grid[i][j][1] = 0;
+        }
     }
 }
 
-void breed(std::string &polymer_template, Insertion insertions[INSERTIONS_CAP], const size_t size)
+void print_grid(int grid[][SIZE][2])
 {
-    for (int epoch = 0; epoch < STEPS; ++epoch)
+    for (int i = 0; i < SIZE; ++i)
     {
-        std::string new_template;
-        int len_polymer = polymer_template.length();
-        for (int i = 0; i < len_polymer - 1; ++i)
+        for (int j = 0; j < SIZE; ++j)
         {
-            std::string current_pair{polymer_template[i], polymer_template[i + 1]};
-
-            for (int j = 0; j < size; ++j)
-            {
-                if (insertions[j].pair == current_pair)
-                {
-                    current_pair.insert(1, 1, insertions[j].value);
-                    current_pair.pop_back();
-                    // std::cout << current_pair << '\n';
-                    new_template += current_pair;
-                    break;
-                }
-            }
+            std::cout << '[' << grid[i][j][0] << ' ' << grid[i][j][1] << "] ";
         }
-        polymer_template = new_template += polymer_template[len_polymer - 1];
-        // std::cout << polymer_template << '\n';
+        std::cout << '\n';
     }
-}
-
-void get_distribution(std::vector<int> &distrib, std::string &polymer_template)
-{
-    int min = 1000000, max = 0;
-
-    while (!polymer_template.empty())
-    {
-        int num_erased = std::erase(polymer_template, polymer_template[0]);
-
-        if(num_erased > max)
-        {
-            max = num_erased;
-        }
-        
-        if(num_erased < min && num_erased > 1)
-        {
-            min = num_erased;
-        }
-    }
-
-    std::cout << "Part 1: " << max - min << '\n';
-}
-
-void part1()
-{
-    std::string polymer_template;
-    Insertion insertions[INSERTIONS_CAP];
-    size_t size = 0;
-
-    parse(polymer_template, insertions, size);
-
-    // std::cout << polymer_template << '\n';
-    // dump_insertions(insertions, size);
-
-    breed(polymer_template, insertions, size);
-
-    std::vector<int> distrib;
-    get_distribution(distrib, polymer_template);
 }
 
 int main(int argc, char const *argv[])
 {
-    part1();
+    std::vector<std::string> subs;
+    int grid[SIZE][SIZE][2];
+
+    init_grid(grid);
+    parse(subs, grid);
+
+    for (int step = 0; step < STEPS; ++step)
+    {
+        for (const std::string &sub : subs)
+        {
+            if (grid[sub[0] - 'A'][sub[1] - 'A'][1])
+            {
+                std::cout << "match for " << sub[0] << sub[1] << '\n';
+                grid[sub[0] - 'A'][sub[1] - 'A'][1] = false;
+
+                ++grid[sub[0] - 'A'][sub[2] - 'A'][0];
+                grid[sub[0] - 'A'][sub[2] - 'A'][1] = true;
+            }
+        }
+    }
+
+    print_grid(grid);
 
     return 0;
 }
