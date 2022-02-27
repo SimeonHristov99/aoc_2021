@@ -2,11 +2,15 @@
 #include <fstream>
 #include <vector>
 
-const char *FILENAME = "sample.txt";
 const int SIZE = 26;
-const int STEPS = 1;
 
-void init_grid(int grid[][SIZE])
+#if 0
+const char *FILENAME = "sample.txt";
+#else
+const char *FILENAME = "input.txt";
+#endif
+
+void init_grid(long grid[][SIZE])
 {
     for (int i = 0; i < SIZE; ++i)
     {
@@ -17,11 +21,21 @@ void init_grid(int grid[][SIZE])
     }
 }
 
+void init_grid(long grid[][SIZE], long rhs[][SIZE])
+{
+    for (int i = 0; i < SIZE; ++i)
+    {
+        for (int j = 0; j < SIZE; ++j)
+        {
+            grid[i][j] = rhs[i][j];
+        }
+    }
+}
+
 void parse(
     std::vector<std::string> &subs,
-    int grid[][SIZE],
-    int occurs[SIZE]
-)
+    long grid[][SIZE],
+    long occurs[SIZE])
 {
     std::string buffer, sub;
     std::ifstream fin(FILENAME);
@@ -39,9 +53,9 @@ void parse(
     {
         int from = buffer[i] - 'A';
         int to = buffer[i + 1] - 'A';
-        
+
         ++grid[from][to];
-        
+
         ++occurs[from];
     }
     ++occurs[buffer[len_buf - 1] - 'A'];
@@ -61,73 +75,70 @@ void parse(
     fin.close();
 }
 
-void print_grid(int grid[][SIZE])
+long breed(int steps)
 {
-    for (int i = 0; i < SIZE; ++i)
-    {
-        for (int j = 0; j < SIZE; ++j)
-        {
-            std::cout << grid[i][j] << ' ';
-        }
-        std::cout << '\n';
-    }
-}
+    std::vector<std::string> subs;
+    long occurs[SIZE] = {0};
+    long prev_grid[SIZE][SIZE];
+    long cur_grid[SIZE][SIZE];
 
-void print_occurs(int occurs[SIZE])
-{
-    for (int i = 0; i < SIZE; ++i)
+    init_grid(prev_grid);
+    parse(subs, prev_grid, occurs);
+    init_grid(cur_grid, prev_grid);
+
+    for (int step = 0; step < steps; ++step)
     {
-        std::cout << occurs[i] << ' ';
+        // consider all pairs "simultaneously"
+        for (const std::string &sub : subs)
+        {
+            if (prev_grid[sub[0] - 'A'][sub[1] - 'A'] <= 0)
+            {
+                continue;
+            }
+
+            // insert new letter
+            // NN, A
+            // NAN
+            cur_grid[sub[0] - 'A'][sub[2] - 'A'] += prev_grid[sub[0] - 'A'][sub[1] - 'A'];
+            cur_grid[sub[2] - 'A'][sub[1] - 'A'] += prev_grid[sub[0] - 'A'][sub[1] - 'A'];
+
+            // increment the occurences of the new element
+            occurs[sub[2] - 'A'] += prev_grid[sub[0] - 'A'][sub[1] - 'A'];
+
+            // disconnect pair
+            cur_grid[sub[0] - 'A'][sub[1] - 'A'] -= prev_grid[sub[0] - 'A'][sub[1] - 'A'];
+        }
+
+        init_grid(prev_grid, cur_grid);
     }
-    std::cout << '\n';
+
+    long max = 0;
+
+    for (int i = 1; i < SIZE; ++i)
+    {
+        if (0 < occurs[i] && max < occurs[i])
+        {
+            max = occurs[i];
+        }
+    }
+
+    long min = max;
+
+    for (int i = 1; i < SIZE; ++i)
+    {
+        if (0 < occurs[i] && occurs[i] < min)
+        {
+            min = occurs[i];
+        }
+    }
+
+    return max - min;
 }
 
 int main(int argc, char const *argv[])
 {
-    std::vector<std::string> subs;
-    int occurs[SIZE] = { 0 };
-    int grid[SIZE][SIZE];
-
-    init_grid(grid);
-    parse(subs, grid, occurs);
-
-    for (int step = 0; step < STEPS; ++step)
-    {
-        std::vector<std::string> matched;
-
-        // consider all pairs "simultaneously"
-        for (const std::string &sub : subs)
-        {
-            if (grid[sub[0] - 'A'][sub[1] - 'A'] > 0)
-            {
-                matched.push_back(sub);
-            }
-        }
-
-        for (const std::string &match : matched)
-        {
-            // insert new letter
-            // NN, A
-            // NAN
-            ++grid[match[0] - 'A'][match[2] - 'A'];
-            ++grid[match[2] - 'A'][match[1] - 'A'];
-
-            // increment the occurences of the new element
-            // grid[match[0] - 'A'][match[1] - 'A'] is the 
-            // number of times we have this pair. We have to
-            // insert the new letter for each of these pairs
-            // occurs[match[2] - 'A'] += (occurs[match[2] - 'A'] == 0 ? 1 : 0);
-            occurs[match[2] - 'A'] += grid[match[0] - 'A'][match[1] - 'A'];
-
-            // disconnect pair
-            grid[match[0] - 'A'][match[1] - 'A'] = 0;
-        }
-    }
-
-    print_grid(grid);
-    std::cout << "\nOccurs: ";
-    print_occurs(occurs);
-
+    std::cout << "Part 1: " << breed(10) << '\n';
+    std::cout << "Part 2: " << breed(40) << '\n';
 
     return 0;
 }
