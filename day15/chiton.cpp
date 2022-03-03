@@ -2,6 +2,7 @@
 #include <fstream>
 #include <vector>
 #include <queue>
+#include <cmath>
 
 #if 0
 const char *FILENAME = "sample.txt";
@@ -64,23 +65,36 @@ bool not_elem(const std::vector<Cell> &p, int i, int j)
     return true;
 }
 
+int euclidean_distance(const std::pair<int, int> &p1, const std::pair<int, int> &p2)
+{
+    return std::sqrt((p1.first - p2.first) * (p1.first - p2.first) + (p1.second - p2.second) * (p1.second - p2.second));
+}
+
 void bfs(int grid[][GRID_CAP], int grid_sz)
 {
-    auto cmp = [grid](
+    auto cmp = [grid, grid_sz](
                    const std::vector<Cell> &p1,
                    const std::vector<Cell> &p2)
     {
         int p1s = 0, p2s = 0, p1z = p1.size(), p2z = p2.size();
 
+        // calculate path for p1
         for (int i = 0; i < p1z; ++i)
         {
             p1s += grid[p1[i].first][p1[i].second];
         }
 
+        // calculate path for p2
         for (int i = 0; i < p2z; ++i)
         {
             p2s += grid[p2[i].first][p2[i].second];
         }
+
+        // add heuristic p1
+        p1s += euclidean_distance(p1[p1z - 1], {grid_sz - 1, grid_sz - 1});
+
+        // add heuristic p2
+        p2s += euclidean_distance(p2[p2z - 1], {grid_sz - 1, grid_sz - 1});
 
         return p1s > p2s;
     };
