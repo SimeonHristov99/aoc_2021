@@ -5,7 +5,7 @@
 #include <queue>
 #include <cmath>
 
-#if 1
+#if 0
 const char *FILENAME = "sample.txt";
 const int GRID_CAP = 12;
 #else
@@ -13,14 +13,17 @@ const char *FILENAME = "input.txt";
 const int GRID_CAP = 128;
 #endif
 
+struct Step
+{
+    std::pair<int, int> coords;
+    int cost;
+};
+
 struct Cell
 {
-    int back_i;
-    int back_j;
-    int i;
-    int j;
-    int gn = 10000;
     int risk;
+    bool has_step;
+    Step step;
 };
 
 std::pair<int, int> NEIGHBOURS[4] = {{-1, 0}, {0, 1}, {1, 0}, {0, -1}};
@@ -42,11 +45,8 @@ void parse(Cell grid[][GRID_CAP], int &grid_sz)
         for (const char c : buffer)
         {
             Cell cell;
-            cell.i = -1;
-            cell.j = -1;
-            cell.back_i = -1;
-            cell.back_j = -1;
             cell.risk = c - '0';
+            cell.has_step = false;
 
             grid[i][j++] = cell;
         }
@@ -66,79 +66,71 @@ void dump_grid(Cell grid[][GRID_CAP], int grid_sz)
     {
         for (int j = 0; j < grid_sz; ++j)
         {
-            std::cout << grid[i][j].j << ' ';
+            std::cout << grid[i][j].risk << ' ';
         }
         std::cout << '\n';
     }
 }
 
-void dijkstra(Cell grid[][GRID_CAP], int grid_sz)
+int ucs(Cell grid[][GRID_CAP], int grid_sz)
 {
-    auto cmp = [](const Cell &c1, const Cell &c2)
+    auto cmp = [](const Step &s1, const Step &s2)
     {
-        return c1.gn > c2.gn;
+        return s1.cost > s2.cost;
     };
 
     int goal_x = grid_sz - 1;
     int goal_y = grid_sz - 1;
-    std::priority_queue<Cell, std::vector<Cell>, decltype(cmp)> frontier(cmp);
-    grid[0][0].i = 0;
-    grid[0][0].j = 0;
-    grid[0][0].back_i = 0;
-    grid[0][0].back_j = 0;
-    grid[0][0].gn = 0;
-    grid[0][0].risk = 0;
-    frontier.push(grid[0][0]);
+
+    std::priority_queue<Step, std::vector<Step>, decltype(cmp)> frontier(cmp);
+    grid[0][0].step = {{0, 0}, 0};
+    grid[0][0].has_step = true;
+    frontier.push(grid[0][0].step);
 
     while (!frontier.empty())
     {
-        Cell current_cell = frontier.top();
+        Step last_cell = frontier.top();
         frontier.pop();
 
-        // std::cout << current_cell.gn << '\n';
+        int x, y;
+        x = last_cell.coords.first;
+        y = last_cell.coords.second;
 
-        if (current_cell.i == goal_x && current_cell.j == goal_y)
+        if (x == goal_x && y == goal_y)
         {
-            std::cout << current_cell.gn << '\n';
-            return;
+            break;
         }
 
         for (const std::pair<int, int> &neigh : NEIGHBOURS)
         {
-            int next_i = current_cell.i + neigh.first;
-            int next_j = current_cell.j + neigh.second;
+            int x2 = x + neigh.first;
+            int y2 = y + neigh.second;
 
-            if (next_i < 0 || next_i >= grid_sz || next_j < 0 || next_j >= grid_sz)
+            if (x2 < 0 || x2 >= grid_sz || y2 < 0 || y2 >= grid_sz)
             {
                 continue;
             }
 
-            Cell next = grid[next_i][next_j];
-
-            if (next.back_i == -1 && next.back_j == -1 || current_cell.gn + next.risk < next.gn)
+            Cell &next_cell = grid[x2][y2];
+            int next_cost = last_cell.cost + next_cell.risk;
+            if (!next_cell.has_step || next_cost < next_cell.step.cost)
             {
-                next.back_i = current_cell.i;
-                next.back_j = current_cell.j;
-                next.i = next_i;
-                next.j = next_j;
-                next.gn = current_cell.gn + next.risk;
-                frontier.push(next);
+                next_cell.has_step = true;
+                next_cell.step = {{x2, y2}, next_cost};
+                frontier.push(next_cell.step);
             }
         }
     }
 
-    std::cout << "Frontier empty :(\n";
+    return grid[goal_x][goal_y].step.cost;
 }
 
 void part1()
 {
-    // parse the grid
     int grid_sz = 0;
     Cell grid[GRID_CAP][GRID_CAP];
     parse(grid, grid_sz);
-    // dump_grid(grid, grid_sz);
-
-    dijkstra(grid, grid_sz);
+    std::cout << "Part 1: " << ucs(grid, grid_sz) << '\n';
 }
 
 int main(int argc, char const *argv[])
