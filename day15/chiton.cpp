@@ -30,6 +30,14 @@ struct Cell
 
 std::pair<int, int> NEIGHBOURS[4] = {{-1, 0}, {0, 1}, {1, 0}, {0, -1}};
 
+/*
+Idea to try out: Maybe create a table of the values by which the risk has
+to increase based on the grid.
+The goal is to have 1 grid that can be reused 25 times.
+
+Formula for risk_inc = ((risk_inc + inc_with_table[i][j]) % 10 + 1)
+*/
+
 void parse(Cell grid[][GRID_CAP], int &grid_sz)
 {
     int i = 0, j = 0;
